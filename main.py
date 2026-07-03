@@ -1,12 +1,10 @@
 import pygame
+from config import *
 
 pygame.init()
 
-WIDTH = 800
-HEIGHT = 600
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("AI 8-Puzzle Game")
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption(WINDOW_TITLE)
 
 running = True
 
@@ -15,7 +13,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill((40, 40, 40))
+    screen.fill(BACKGROUND_COLOR)
     pygame.display.update()
 
 pygame.quit()
