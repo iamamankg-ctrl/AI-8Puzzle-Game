@@ -1,9 +1,18 @@
-# Kích thước cửa sổ
+# Cửa sổ game
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
-
-# Tiêu đề game
 WINDOW_TITLE = "AI 8-Puzzle Game"
 
 # Màu sắc
 BACKGROUND_COLOR = (40, 40, 40)
+TILE_COLOR = (230, 230, 230)
+LINE_COLOR = (0, 0, 0)
+TEXT_COLOR = (0, 0, 0)
+
+# Bàn cờ
+BOARD_SIZE = 3
+TILE_SIZE = 100
+TILE_GAP = 5
+
+BOARD_X = 245
+BOARD_Y = 145
