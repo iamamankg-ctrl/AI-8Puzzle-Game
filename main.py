@@ -4,19 +4,32 @@ from board import Board
 
 pygame.init()
 
-board = Board()
-
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption(WINDOW_TITLE)
 
 font = pygame.font.SysFont("arial", 40, bold=True)
 
+board = Board()
+
 running = True
 
 while running:
+
     for event in pygame.event.get():
+
         if event.type == pygame.QUIT:
             running = False
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+
+            mx, my = pygame.mouse.get_pos()
+
+            col = (mx - BOARD_X) // (TILE_SIZE + TILE_GAP)
+            row = (my - BOARD_Y) // (TILE_SIZE + TILE_GAP)
+
+            if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
+                index = row * BOARD_SIZE + col
+                board.move(index)
 
     screen.fill(BACKGROUND_COLOR)
 
@@ -43,8 +56,14 @@ while running:
             )
 
             if value != 0:
+
                 text = font.render(str(value), True, TEXT_COLOR)
-                text_rect = text.get_rect(center=(x + TILE_SIZE // 2, y + TILE_SIZE // 2))
+
+                text_rect = text.get_rect(
+                    center=(x + TILE_SIZE // 2,
+                            y + TILE_SIZE // 2)
+                )
+
                 screen.blit(text, text_rect)
 
     pygame.display.flip()

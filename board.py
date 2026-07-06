@@ -8,3 +8,18 @@ class Board:
 
     def get_value(self, index):
         return self.state[index]
+
+    def get_empty_index(self):
+        return self.state.index(0)
+
+    def move(self, index):
+        empty = self.get_empty_index()
+
+        row1, col1 = divmod(index, 3)
+        row2, col2 = divmod(empty, 3)
+
+        if abs(row1 - row2) + abs(col1 - col2) == 1:
+            self.state[index], self.state[empty] = (
+                self.state[empty],
+                self.state[index]
+            )
