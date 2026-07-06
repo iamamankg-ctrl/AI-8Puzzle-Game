@@ -31,6 +31,11 @@ while running:
                 index = row * BOARD_SIZE + col
                 board.move(index)
 
+        elif event.type == pygame.KEYDOWN:
+
+            if event.key == pygame.K_s:
+                board.shuffle()
+
     screen.fill(BACKGROUND_COLOR)
 
     for row in range(BOARD_SIZE):
@@ -42,12 +47,14 @@ while running:
             x = BOARD_X + col * (TILE_SIZE + TILE_GAP)
             y = BOARD_Y + row * (TILE_SIZE + TILE_GAP)
 
+            # Vẽ ô
             pygame.draw.rect(
                 screen,
                 TILE_COLOR,
                 (x, y, TILE_SIZE, TILE_SIZE)
             )
 
+            # Vẽ viền
             pygame.draw.rect(
                 screen,
                 LINE_COLOR,
@@ -55,13 +62,16 @@ while running:
                 2
             )
 
+            # Không vẽ số cho ô trống
             if value != 0:
 
                 text = font.render(str(value), True, TEXT_COLOR)
 
                 text_rect = text.get_rect(
-                    center=(x + TILE_SIZE // 2,
-                            y + TILE_SIZE // 2)
+                    center=(
+                        x + TILE_SIZE // 2,
+                        y + TILE_SIZE // 2
+                    )
                 )
 
                 screen.blit(text, text_rect)

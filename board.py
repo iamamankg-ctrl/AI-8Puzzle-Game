@@ -1,3 +1,6 @@
+import random
+
+
 class Board:
     def __init__(self):
         self.state = [
@@ -18,8 +21,31 @@ class Board:
         row1, col1 = divmod(index, 3)
         row2, col2 = divmod(empty, 3)
 
+        # Chỉ được di chuyển nếu ô được chọn nằm cạnh ô trống
         if abs(row1 - row2) + abs(col1 - col2) == 1:
             self.state[index], self.state[empty] = (
                 self.state[empty],
                 self.state[index]
             )
+
+    def shuffle(self):
+        for _ in range(100):
+            empty = self.get_empty_index()
+
+            row, col = divmod(empty, 3)
+
+            moves = []
+
+            if row > 0:
+                moves.append(empty - 3)
+
+            if row < 2:
+                moves.append(empty + 3)
+
+            if col > 0:
+                moves.append(empty - 1)
+
+            if col < 2:
+                moves.append(empty + 1)
+
+            self.move(random.choice(moves))
