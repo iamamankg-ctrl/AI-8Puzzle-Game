@@ -21,7 +21,6 @@ class Board:
         row1, col1 = divmod(index, 3)
         row2, col2 = divmod(empty, 3)
 
-        # Chỉ được di chuyển nếu ô được chọn nằm cạnh ô trống
         if abs(row1 - row2) + abs(col1 - col2) == 1:
             self.state[index], self.state[empty] = (
                 self.state[empty],
@@ -49,3 +48,10 @@ class Board:
                 moves.append(empty + 1)
 
             self.move(random.choice(moves))
+
+    def is_solved(self):
+        return self.state == [
+            1, 2, 3,
+            4, 5, 6,
+            7, 8, 0
+        ]

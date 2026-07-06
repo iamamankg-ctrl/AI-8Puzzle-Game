@@ -8,8 +8,10 @@ screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption(WINDOW_TITLE)
 
 font = pygame.font.SysFont("arial", 40, bold=True)
+win_font = pygame.font.SysFont("arial", 30, bold=True)
 
 board = Board()
+board.shuffle()
 
 running = True
 
@@ -47,14 +49,12 @@ while running:
             x = BOARD_X + col * (TILE_SIZE + TILE_GAP)
             y = BOARD_Y + row * (TILE_SIZE + TILE_GAP)
 
-            # Vẽ ô
             pygame.draw.rect(
                 screen,
                 TILE_COLOR,
                 (x, y, TILE_SIZE, TILE_SIZE)
             )
 
-            # Vẽ viền
             pygame.draw.rect(
                 screen,
                 LINE_COLOR,
@@ -62,19 +62,19 @@ while running:
                 2
             )
 
-            # Không vẽ số cho ô trống
             if value != 0:
-
                 text = font.render(str(value), True, TEXT_COLOR)
-
                 text_rect = text.get_rect(
-                    center=(
-                        x + TILE_SIZE // 2,
-                        y + TILE_SIZE // 2
-                    )
+                    center=(x + TILE_SIZE // 2,
+                            y + TILE_SIZE // 2)
                 )
-
                 screen.blit(text, text_rect)
+
+    # Kiểm tra chiến thắng
+    if board.is_solved():
+        text = win_font.render("YOU WIN!", True, (0, 255, 0))
+        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 50))
+        screen.blit(text, text_rect)
 
     pygame.display.flip()
 
