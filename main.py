@@ -1,4 +1,5 @@
 import pygame
+import time
 from config import *
 from board import Board
 
@@ -13,6 +14,7 @@ info_font = pygame.font.SysFont("arial", 28)
 
 board = Board()
 board.shuffle()
+start_time = time.time()
 
 running = True
 
@@ -38,16 +40,31 @@ while running:
 
             if event.key == pygame.K_s:
                 board.shuffle()
+                start_time = time.time()
 
     screen.fill(BACKGROUND_COLOR)
 
     # Hiển thị số bước
     move_text = info_font.render(
-        f"Moves: {board.moves}",
-        True,
-        (255, 255, 255)
-    )
+         f"Moves: {board.moves}",
+         True,
+         (255, 255, 255)
+         )
     screen.blit(move_text, (20, 20))
+
+    # Hiển thị thời gian
+    elapsed = int(time.time() - start_time)
+
+    minutes = elapsed // 60
+    seconds = elapsed % 60
+
+    time_text = info_font.render(
+         f"Time: {minutes:02d}:{seconds:02d}",
+         True,
+         (255, 255, 255)
+         )
+    screen.blit(move_text, (20, 20))
+    screen.blit(time_text, (20, 55))
 
     # Vẽ bàn cờ
     for row in range(BOARD_SIZE):
