@@ -9,6 +9,7 @@ pygame.display.set_caption(WINDOW_TITLE)
 
 font = pygame.font.SysFont("arial", 40, bold=True)
 win_font = pygame.font.SysFont("arial", 30, bold=True)
+info_font = pygame.font.SysFont("arial", 28)
 
 board = Board()
 board.shuffle()
@@ -40,6 +41,15 @@ while running:
 
     screen.fill(BACKGROUND_COLOR)
 
+    # Hiển thị số bước
+    move_text = info_font.render(
+        f"Moves: {board.moves}",
+        True,
+        (255, 255, 255)
+    )
+    screen.blit(move_text, (20, 20))
+
+    # Vẽ bàn cờ
     for row in range(BOARD_SIZE):
         for col in range(BOARD_SIZE):
 
@@ -63,16 +73,27 @@ while running:
             )
 
             if value != 0:
+
                 text = font.render(str(value), True, TEXT_COLOR)
+
                 text_rect = text.get_rect(
-                    center=(x + TILE_SIZE // 2,
-                            y + TILE_SIZE // 2)
+                    center=(
+                        x + TILE_SIZE // 2,
+                        y + TILE_SIZE // 2
+                    )
                 )
+
                 screen.blit(text, text_rect)
 
     # Kiểm tra chiến thắng
     if board.is_solved():
-        text = win_font.render("YOU WIN!", True, (0, 255, 0))
+
+        text = win_font.render(
+            "YOU WIN!",
+            True,
+            (0, 255, 0)
+        )
+
         text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 50))
         screen.blit(text, text_rect)
 
