@@ -8,7 +8,7 @@ SUBTEXT_COLOR = (160, 160, 160)    # Medium Emphasis Text
 BORDER_COLOR = (45, 45, 45)       # Subtle Borders
 
 # Accent Colors
-PRIMARY_ACCENT = (0, 162, 232)    # Cyan Blue
+PRIMARY_ACCENT = (255, 215, 0)    # Cyan Blue
 SECONDARY_ACCENT = (155, 89, 182) # Amethyst Purple
 DANGER_ACCENT = (231, 76, 60)     # Soft Red
 SUCCESS_ACCENT = (46, 204, 113)   # Emerald Green
