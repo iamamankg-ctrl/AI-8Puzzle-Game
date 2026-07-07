@@ -1,162 +1,265 @@
 import pygame
+import sys
+import os
+import tkinter as tk
+from tkinter import filedialog
+from image_processor import load_and_split_image
+from ui_system import Tile, Modal, BG_COLOR
+from ui_statistics import GameDashboard
+from game_logic import PuzzleGame
+import bfs_solver
+import astar_solver
 import time
-from config import *
-from board import Board
-from solver import bfs
 
-pygame.init()
+# Core state variables
+game = PuzzleGame()
+is_finished = False
+victory_modal = None
+image_tiles = {}
+current_image_name = ""
 
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption(WINDOW_TITLE)
+# AI and Animation state
+solve_path = []
+auto_moving = False
+last_move_time = 0
+solve_stats = {"nodes": "-", "time": "-"}
+start_play_time = 0
+elapsed_play_time = 0
+has_started_playing = False
+last_action_time = time.time()
+hint_tile_index = None
+hint_blink = False
+last_blink_time = 0
+hint_start_time = 0
 
-font = pygame.font.SysFont("arial", 40, bold=True)
-win_font = pygame.font.SysFont("arial", 30, bold=True)
-info_font = pygame.font.SysFont("arial", 28)
+def exit_game():
+    pygame.quit()
+    sys.exit()
 
-board = Board()
-board.shuffle()
-start_time = time.time()
+def reset_game():
+    global is_finished, victory_modal, auto_moving, solve_path, start_play_time, elapsed_play_time, solve_stats, has_started_playing
+    global last_action_time, hint_tile_index, hint_blink, last_blink_time
+    game.reset()
+    is_finished = False
+    victory_modal = None
+    auto_moving = False
+    solve_path = []
+    has_started_playing = False
+    start_play_time = 0
+    elapsed_play_time = 0
+    solve_stats = {"nodes": "-", "time": "-"}
 
-# ======================
-# AI Solver
-# ======================
-ai_path = []
-ai_step = 0
-ai_solving = False
+    last_action_time = time.time()
+    hint_tile_index = None
+    hint_blink = False
+    last_blink_time = 0
+    hint_start_time = 0
 
-AI_DELAY = 250  # milliseconds
-last_ai_move = 0
+def close_modal():
+    global victory_modal
+    victory_modal = None
 
-running = True
+def undo():
+    global last_action_time, hint_tile_index
+    if not is_finished and game.undo():
+        last_action_time = time.time()
+        hint_tile_index = None
+        pass
 
-while running:
+def redo():
+    global last_action_time, hint_tile_index
+    if not is_finished and game.redo():
+        last_action_time = time.time()
+        hint_tile_index = None
+        pass
 
-    for event in pygame.event.get():
+def solve_bfs():
+    global solve_path, auto_moving, solve_stats, has_started_playing, start_play_time
+    global hint_tile_index
+    if not is_finished and not auto_moving:
+        hint_tile_index = None
+        path, nodes, duration = bfs_solver.solve(game.current_state, game.goal_state)
+        if path:
+            if not has_started_playing:
+                has_started_playing = True
+                start_play_time = time.time()
+            solve_path = path
+            auto_moving = True
+            solve_stats = {"nodes": str(nodes), "time": f"{duration:.1f} ms"}
 
-        if event.type == pygame.QUIT:
-            running = False
+def solve_astar():
+    global solve_path, auto_moving, solve_stats, has_started_playing, start_play_time
+    global hint_tile_index
+    if not is_finished and not auto_moving:
+        hint_tile_index = None
+        path, nodes, duration = astar_solver.solve(game.current_state, game.goal_state)
+        if path:
+            if not has_started_playing:
+                has_started_playing = True
+                start_play_time = time.time()
+            solve_path = path
+            auto_moving = True
+            solve_stats = {"nodes": str(nodes), "time": f"{duration:.1f} ms"}
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
+def insert_image():
+    if is_finished: return
+    # File picker for choosing a puzzle image
+    file_path = filedialog.askopenfilename(
+        title="Chọn ảnh cho Puzzle",
+        filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp *.svg"), ("All files", "*.*")]
+    )
+    if file_path:
+        new_tiles, name = load_and_split_image(file_path, 190)
+        if new_tiles:
+            global image_tiles, current_image_name
+            image_tiles = new_tiles
+            current_image_name = name
 
-            mx, my = pygame.mouse.get_pos()
+def handle_tile_click(index):
+    global is_finished, victory_modal, has_started_playing, start_play_time, solve_stats
+    global last_action_time, hint_tile_index
+    if not is_finished and game.move(index):
+        last_action_time = time.time()
+        hint_tile_index = None
 
-            col = (mx - BOARD_X) // (TILE_SIZE + TILE_GAP)
-            row = (my - BOARD_Y) // (TILE_SIZE + TILE_GAP)
+        if not has_started_playing:
+            has_started_playing = True
+            start_play_time = time.time()
+            
+        if not auto_moving:
+            # Clear AI stats since the user is playing manually
+            solve_stats = {"nodes": "-", "time": "-"}
 
-            if 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE:
-                index = row * BOARD_SIZE + col
-                board.move(index)
+        if game.is_goal():
+            is_finished = True
+            victory_modal = Modal(
+                "Bạn đã giải thành công!",
+                "Chơi lại", reset_game,
+                "Không", close_modal
+            )
 
-        elif event.type == pygame.KEYDOWN:
+def main():
+    global auto_moving, last_move_time, solve_path, is_finished, elapsed_play_time, start_play_time, has_started_playing
+    global hint_blink, hint_tile_index, last_blink_time, last_action_time, hint_start_time
+    pygame.init()
+    SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("8-Puzzle Game")
+    
+    # Tkinter root for dialogs
+    root = tk.Tk()
+    root.withdraw()
+    
+    clock = pygame.time.Clock()
 
-            # ======================
-            # Shuffle game
-            # ======================
-            if event.key == pygame.K_s:
-                board.shuffle()
-                start_time = time.time()
+    # Define callbacks for the UI
+    callbacks = {
+        'insert_image': insert_image,
+        'reset_game': reset_game,
+        'solve_bfs': solve_bfs,
+        'solve_astar': solve_astar,
+        'undo': undo,
+        'redo': redo
+    }
+    
+    # Initialize UI Dashboard (Header, Panels, Buttons)
+    dashboard = GameDashboard(SCREEN_WIDTH, SCREEN_HEIGHT, callbacks)
+    
+    # Initialize Tiles (Logic handled in main loop)
+    tile_size = 190
+    board_rect = dashboard.board_rect
+    start_x = board_rect.x + (board_rect.width - (3 * tile_size)) // 2
+    start_y = board_rect.y + (board_rect.height - (3 * tile_size)) // 2
+    
+    tiles_ui = []
+    for i in range(3):
+        for j in range(3):
+            idx = i * 3 + j
+            tile_rect = (start_x + j * tile_size, start_y + i * tile_size, tile_size, tile_size)
+            tile = Tile(tile_rect, 0, idx, callback=handle_tile_click)
+            tiles_ui.append(tile)
 
-                ai_path = []
-                ai_step = 0
-                ai_solving = False
-
-            # ======================
-            # Solve by BFS
-            # ======================
-            elif event.key == pygame.K_b:
-                ai_path = bfs(board.get_state())
-
-                if ai_path and len(ai_path) > 1:
-                    ai_step = 1
-                    ai_solving = True
-                    last_ai_move = pygame.time.get_ticks()
-
-    # ======================
-    # AI AUTO MOVE (nếu cần chạy)
-    # ======================
-    if ai_solving:
-        now = pygame.time.get_ticks()
-
-        if now - last_ai_move > AI_DELAY:
-            if ai_step < len(ai_path):
-                board.set_state(ai_path[ai_step])
-                ai_step += 1
-                last_ai_move = now
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+            if is_finished and victory_modal:
+                victory_modal.handle_event(event)
             else:
-                ai_solving = False
+                dashboard.handle_event(event)
+                if not auto_moving: # Disable manual moves during AI playback
+                    for tile in tiles_ui:
+                        tile.handle_event(event)
+        
+        # --- Update ---
+        current_time = pygame.time.get_ticks()
 
-    # ======================
-    # DRAW
-    # ======================
-    screen.fill(BACKGROUND_COLOR)
+        
+        # Handle auto playback
+        if auto_moving and solve_path:
+            if current_time - last_move_time > 300: # 300ms delay between moves
+                move_idx = solve_path.pop(0)
+                handle_tile_click(move_idx)
+                last_move_time = current_time
+                if not solve_path:
+                    auto_moving = False
+        
+        # Update play time
+        if has_started_playing and not is_finished:
+            elapsed_play_time = time.time() - start_play_time
+        
+        mins = int(elapsed_play_time // 60)
+        secs = int(elapsed_play_time % 60)
+        time_str = f"{mins:02d}:{secs:02d}"
+        
+        dashboard.update_image_name(current_image_name)
+        dashboard.update_stats(play_time=time_str, solve_time=solve_stats["time"], nodes=solve_stats["nodes"])
+        
+        for i, tile in enumerate(tiles_ui):
+            val = game.current_state[i]
+            tile.value = val
+            tile.image = image_tiles.get(val)
 
-    # Moves
-    move_text = info_font.render(
-        f"Moves: {board.moves}",
-        True,
-        (255, 255, 255)
-    )
-    screen.blit(move_text, (20, 20))
+        # --- Hint after 2.5 seconds ---
+        if not is_finished and not auto_moving and hint_tile_index is None:
+            if time.time() - last_action_time > 2.5:
+                path, _, _ = astar_solver.solve(game.current_state, game.goal_state)
+                if path:
+                    hint_tile_index = path[0]  # Suggest the next move
+                    hint_blink = True
+                    last_blink_time = current_time
+ 
+        # Blink effect
+        if hint_tile_index is not None:
+            if current_time - last_blink_time > 300:
+                hint_blink = not hint_blink
+                last_blink_time = current_time
 
-    # Time
-    elapsed = int(time.time() - start_time)
-    minutes = elapsed // 60
-    seconds = elapsed % 60
+        # --- Render ---
+        screen.fill(BG_COLOR)
+        
+        dashboard.draw(screen)
+        for tile in tiles_ui:
+            tile.draw(screen)
 
-    time_text = info_font.render(
-        f"Time: {minutes:02d}:{seconds:02d}",
-        True,
-        (255, 255, 255)
-    )
-    screen.blit(time_text, (20, 55))
+        # DRAW HINT
+        if hint_tile_index is not None and hint_blink:
+            hint_tile = tiles_ui[hint_tile_index]
+            pygame.draw.rect(screen, (255, 255, 0), hint_tile.rect, 8)
+            
+        if is_finished and victory_modal:
+            victory_modal.draw(screen)
+            
+        pygame.display.flip()
+        clock.tick(60)
 
-    # ======================
-    # DRAW BOARD
-    # ======================
-    for row in range(BOARD_SIZE):
-        for col in range(BOARD_SIZE):
+       
 
-            index = row * BOARD_SIZE + col
-            value = board.get_value(index)
 
-            x = BOARD_X + col * (TILE_SIZE + TILE_GAP)
-            y = BOARD_Y + row * (TILE_SIZE + TILE_GAP)
+    pygame.quit()
+    sys.exit()
 
-            pygame.draw.rect(
-                screen,
-                TILE_COLOR,
-                (x, y, TILE_SIZE, TILE_SIZE)
-            )
-
-            pygame.draw.rect(
-                screen,
-                LINE_COLOR,
-                (x, y, TILE_SIZE, TILE_SIZE),
-                2
-            )
-
-            if value != 0:
-                text = font.render(str(value), True, TEXT_COLOR)
-
-                text_rect = text.get_rect(
-                    center=(x + TILE_SIZE // 2, y + TILE_SIZE // 2)
-                )
-
-                screen.blit(text, text_rect)
-
-    # ======================
-    # WIN CHECK
-    # ======================
-    if board.is_solved():
-        text = win_font.render(
-            "YOU WIN!",
-            True,
-            (0, 255, 0)
-        )
-
-        text_rect = text.get_rect(center=(WINDOW_WIDTH // 2, 50))
-        screen.blit(text, text_rect)
-
-    pygame.display.flip()
-
-pygame.quit()
+if __name__ == "__main__":
+    main()
