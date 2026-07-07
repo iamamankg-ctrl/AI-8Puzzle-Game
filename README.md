@@ -1,26 +1,34 @@
 # 🧩 AI 8-Puzzle Game
+Giới thiệu
 
-Đây là dự án xây dựng trò chơi **8-Puzzle** bằng Python kết hợp với Pygame.
+AI-8Puzzle-Game là một dự án mô phỏng trò chơi 8-Puzzle được xây dựng bằng Python và Pygame. Dự án cho phép người chơi tự giải câu đố hoặc sử dụng các thuật toán tìm kiếm của Trí tuệ nhân tạo (Artificial Intelligence) để tìm lời giải tối ưu.
 
-> 🚧 Dự án đang được phát triển.
+Mục tiêu của dự án là giúp người học hiểu cách hoạt động của các thuật toán tìm kiếm thông qua việc trực quan hóa quá trình giải bài toán.
 
 ---
 
-## 📌 Mục tiêu
+## 📌 Tính năng
 
-- Xây dựng trò chơi 8-Puzzle.
-- Áp dụng thuật toán BFS.
-- Áp dụng thuật toán A*.
-- So sánh hiệu năng giữa các thuật toán.
+- Giao diện đồ họa được xây dựng bằng Pygame.
+- Chơi trò chơi 8-Puzzle bằng chuột.
+- Trộn bàn cờ ngẫu nhiên.
+- Kiểm tra trạng thái thắng.
+- Hiển thị số bước đã thực hiện.
+- Hiển thị thời gian giải.
+- Hỗ trợ giải tự động bằng các thuật toán AI.
+- Hoạt ảnh mô phỏng từng bước giải.
+- Thiết kế giao diện hiện đại với màu sắc dễ nhìn.
 
 ---
 
 ## 🛠️ Công nghệ
 
-- Python
-- Pygame CE
-- Pillow
-- Git & GitHub
+- Python 3.12+
+- Pygame Community Edition (pygame-ce)
+- Heapq
+- Collections
+- Time
+- ath
 
 ---
 
